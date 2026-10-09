@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>סדר סליחות — הנוסח המשולב</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <main id="page-top">
+      <header class="site-header">
+        <span id="current-middle" class="current-middle" aria-live="polite"></span>
+        <button id="content-menu-button" class="content-menu-button" type="button" aria-haspopup="dialog">תוכן</button>
+      </header>
+      <article id="content" class="document" aria-live="polite">
+        <p class="loading">טוען את סדר הסליחות…</p>
+      </article>
+    </main>
+    <dialog id="content-menu" aria-labelledby="content-menu-title">
+      <div class="dialog-header">
+        <div class="dialog-heading">
+          <h2 id="content-menu-title">בחירת קטע</h2>
+          <p id="content-menu-date" class="dialog-date"></p>
+        </div>
+        <button id="content-menu-close" class="dialog-close" type="button" aria-label="סגירת התוכן">×</button>
+      </div>
+      <button id="today-service-button" class="content-file-button" type="button">חזרה לסדר של היום</button>
+      <ul id="content-file-list" class="content-file-list"></ul>
+    </dialog>
+
+    <script type="module" src="./app.mjs"></script>
+  </body>
+</html>
