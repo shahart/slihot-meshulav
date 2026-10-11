@@ -6,7 +6,9 @@
 
 ![לוגו הישיבה](https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcT6qdeJOaaCxOYvjh4J3IpADnQGrGJc7tgQpKhWSQ18Mw&s=10)
 
-https://www.maalegilboa.org/article/combined-slichot/
+[מבוא למהדורה המודפסת](https://drive.google.com/file/d/1WD-Eg3bxtsfqmSDbFfvHHSNFAVVUrJa_)
+
+https://maalegilboa.org/article/combined-slichot/
 
 ## Tech stuff
 
@@ -14,7 +16,15 @@ fyi - Markdown rendered does not support: blockquotes, inline code, tables, imag
 
 Unit test:
 
-    node --test test/*.test.mjs
+    npm ci --prefix docs
+    npm --prefix docs test
+
+Type-check the TypeScript source without writing `app.js`:
+
+    npm --prefix docs run check
+
+`docs/app.ts` is the source module. Commit its generated `docs/app.js` so the
+published static site needs no build tooling at runtime.
 
 Browser test: at Chrome's dev tools (OR http://127.0.0.1:5500/docs/index.html?SLIHOT_DEBUG_DATE=2026-09-05)
 
@@ -34,6 +44,6 @@ window.slihotDebug.render();
 נוסח נוסף של
 **ישיבת ברכת משה - מעלה אדומים**:
 
-https://www.ybm.org.il/Admin/uploaddata/LessonsFiles/Pdf/14558.pdf
+[סליחות משולבות PDF](https://www.ybm.org.il/Admin/uploaddata/LessonsFiles/Pdf/14558.pdf)
 
 הפיוטים מפורשים בידי הרב אהרן גלצר

@@ -1,4 +1,4 @@
-const jerusalemTimeZone = "Asia/Jerusalem";
+const jerusalemTimeZone: string = "Asia/Jerusalem";
 const hebrewDateFormatter = new Intl.DateTimeFormat("en-u-ca-hebrew", {
   timeZone: jerusalemTimeZone,
   day: "numeric",
@@ -21,7 +21,17 @@ const hebrewDateDisplayFormatter = new Intl.DateTimeFormat("he-IL-u-ca-hebrew", 
   year: "numeric"
 });
 
-function hebrewDate(date) {
+type HebrewDate = { day: number; month: string; year: number };
+type DebugDateValue = string | Date | null | undefined;
+
+declare global {
+  interface Window {
+    SLIHOT_DEBUG_DATE?: string | Date;
+    slihotDebug?: { render: () => Promise<void> };
+  }
+}
+
+function hebrewDate(date: Date): HebrewDate {
   const parts = Object.fromEntries(
     hebrewDateFormatter.formatToParts(date)
       .filter(({ type }) => type !== "literal")
@@ -30,7 +40,7 @@ function hebrewDate(date) {
   return { day: Number(parts.day), month: parts.month, year: Number(parts.year) };
 }
 
-function addDays(date, days) {
+function addDays(date: Date, days: number): Date {
   const result = new Date(date);
   result.setUTCDate(result.getUTCDate() + days);
   return result;
@@ -40,12 +50,12 @@ function addDays(date, days) {
  * From 20:00 Jerusalem time onwards the evening service already follows the
  * upcoming day's selichot content.
  */
-function effectiveServiceDate(today) {
+function effectiveServiceDate(today: Date): Date {
   const hour = Number(hourFormatter.format(today));
   return hour >= 20 ? addDays(today, 1) : today;
 }
 
-function roshHashanaNear(date) {
+function roshHashanaNear(date: Date): Date | null {
   // The relevant period is from at most seven days before Rosh Hashanah
   // through 9 Tishri, eight days after it.
   for (let daysAway = -8; daysAway <= 7; daysAway += 1) {
@@ -56,7 +66,7 @@ function roshHashanaNear(date) {
   return null;
 }
 
-function shabbatBefore(roshHashana) {
+function shabbatBefore(roshHashana: Date): Date {
   for (let daysBefore = 1; daysBefore <= 7; daysBefore += 1) {
     const candidate = addDays(roshHashana, -daysBefore);
     if (weekdayFormatter.format(candidate) === "Sat") return candidate;
@@ -64,7 +74,7 @@ function shabbatBefore(roshHashana) {
   throw new Error("לא ניתן לחשב את השבת שלפני ראש השנה");
 }
 
-function isValidSlichotDate(today) {
+function isValidSlichotDate(today: Date): boolean {
   const roshHashana = roshHashanaNear(today);
   if (!roshHashana) return false;
 
@@ -84,7 +94,7 @@ function isValidSlichotDate(today) {
  * @returns {string | null} A content filename, or null outside the permitted
  *   selichot dates.
  */
-export function middleFile(today = new Date()) {
+export function middleFile(today: Date = new Date()): string | null {
   console.info("SLIHOT_DEBUG_DATE=", today.toISOString());
   const serviceDate = effectiveServiceDate(today);
   if (!isValidSlichotDate(serviceDate)) return null;
@@ -95,8 +105,9 @@ export function middleFile(today = new Date()) {
   if (dateInHebrew.month === "Elul" && dateInHebrew.day === 29) return "ערב ראש השנה עמוד 31";
   if (dateInHebrew.month === "Elul") {
     const roshHashana = roshHashanaNear(serviceDate);
+    if (!roshHashana) return null;
     const firstDay = shabbatBefore(roshHashana);
-    const daysSinceShabbat = Math.round((serviceDate - firstDay) / 86_400_000);
+    const daysSinceShabbat = Math.round((serviceDate.getTime() - firstDay.getTime()) / 86_400_000);
     if (daysSinceShabbat == 1) return "יום ראשון עמוד 24";
     else if (daysSinceShabbat == 2) return "יום שני עמוד 25";
     else if (daysSinceShabbat == 3) return "יום שלישי עמוד 26";
@@ -135,7 +146,7 @@ export function middleFile(today = new Date()) {
 }
 
 const contentDirectory = "./";
-const contentFiles = [
+const contentFiles: readonly string[] = [
   "התחלה", 
   "יום ראשון עמוד 24",
   "יום שני עמוד 25",
@@ -154,11 +165,18 @@ const contentFiles = [
 ];
 const allowedFiles = new Set(contentFiles);
 
-function escapeHtml(text) {
-  return text.replace(/[&<>\"]/g, character => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" })[character]);
+function requireElement<T extends Element>(selector: string): T {
+  const element = document.querySelector<T>(selector);
+  if (!element) throw new Error(`Missing required element: ${selector}`);
+  return element;
 }
 
-function renderInline(text) {
+function escapeHtml(text: string): string {
+  const entities: Record<string, string> = { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" };
+  return text.replace(/[&<>\"]/g, character => entities[character]);
+}
+
+function renderInline(text: string): string {
   return escapeHtml(text)
     .replace(/\[([^\]]+)\]\(((?:https?:\/\/|mailto:)[^\s)]+)\)/gi, '<a href="$2" rel="noopener noreferrer">$1</a>')
     .replace(/(\*\*|__)(?=\S)(.+?\S)\1/g, "<strong>$2</strong>")
@@ -166,17 +184,17 @@ function renderInline(text) {
     .replace(/(^|[^\w])_(?=\S)(.+?\S)_($|[^\w])/g, "$1<em>$2</em>$3");
 }
 
-export function renderMarkdown(markdown) {
+export function renderMarkdown(markdown: string): string {
   return markdown.trim().split(/\n\s*\n/).map(block => {
     const text = block.trim();
     if (text === ">עמוד<") return '<div class="page-marker">עמוד</div>';
     const lines = text.split("\n");
     const unorderedItems = lines.map(line => line.match(/^\s*[-*+]\s+(.+)$/));
-    if (unorderedItems.every(Boolean)) {
+    if (unorderedItems.every((item): item is RegExpMatchArray => item !== null)) {
       return `<ul>${unorderedItems.map(item => `<li>${renderInline(item[1])}</li>`).join("")}</ul>`;
     }
     const orderedItems = lines.map(line => line.match(/^\s*\d+[.)]\s+(.+)$/));
-    if (orderedItems.every(Boolean)) {
+    if (orderedItems.every((item): item is RegExpMatchArray => item !== null)) {
       return `<ol>${orderedItems.map(item => `<li>${renderInline(item[1])}</li>`).join("")}</ol>`;
     }
     const heading = text.match(/^(#{1,6})\s+(.+)$/);
@@ -189,46 +207,47 @@ export function renderMarkdown(markdown) {
   }).join("\n");
 }
 
-function renderDocument(markdownFiles) {
+function renderDocument(markdownFiles: readonly string[]): string {
   const title = "<h1>סדר סליחות - נוסח משולב</h1>";
   return title + markdownFiles.map(renderMarkdown).join("\n") +
     '<div class="return-to-top"><button class="return-to-top-button" type="button">חזרה לראש העמוד</button></div>';
 }
 
-async function loadFile(name) {
+async function loadFile(name: string): Promise<string> {
   if (!allowedFiles.has(name)) throw new Error("שם קובץ תוכן לא תקין");
   const response = await fetch(contentDirectory + name + ".md");
   if (!response.ok) throw new Error(`לא ניתן לטעון את ${name}`);
   return response.text();
 }
 
-async function renderService(today = new Date()) {
+async function renderService(today: Date = new Date()): Promise<void> {
   const middle = middleFile(today);
-  document.querySelector("#current-middle").textContent = middle
+  requireElement<HTMLElement>("#current-middle").textContent = middle
     ? middle.replace(/\s*עמוד[\s\S]*$/, "").trim()
     : "";
   if (middle === null) {
-    document.querySelector("#content").textContent = "לא אומרים סליחות היום";
+    requireElement<HTMLElement>("#content").textContent = "לא אומרים סליחות היום";
     return;
   }
 
   console.info("middleFile=", middle);
   const files = ["התחלה", middle, "המשך"];
   const markdown = await Promise.all(files.map(loadFile));
-  document.querySelector("#content").innerHTML = renderDocument(markdown);
+  requireElement<HTMLElement>("#content").innerHTML = renderDocument(markdown);
 }
 
-async function showFile(name) {
+async function showFile(name: string): Promise<void> {
   const markdown = await loadFile(name);
-  document.querySelector("#content").innerHTML = renderDocument([markdown]);
+  requireElement<HTMLElement>("#content").innerHTML = renderDocument([markdown]);
 }
 
-function showError(error) {
-  document.querySelector("#content").innerHTML = `<p class="error">${escapeHtml(error.message)}</p>`;
+function showError(error: unknown): void {
+  const message = error instanceof Error ? error.message : String(error);
+  requireElement<HTMLElement>("#content").innerHTML = `<p class="error">${escapeHtml(message)}</p>`;
   console.error(error);
 }
 
-export function dateFromDebugFlag(value) {
+export function dateFromDebugFlag(value: DebugDateValue): Date | null {
   if (value === undefined || value === null || value === "") return null;
   const date = value instanceof Date ? new Date(value) : new Date(value);
   if (Number.isNaN(date.getTime())) {
@@ -238,7 +257,7 @@ export function dateFromDebugFlag(value) {
   return date;
 }
 
-function configuredDate() {
+function configuredDate(): Date {
   // Set ?SLIHOT_DEBUG_DATE=2026-09-05 in the URL to share a specific service
   // date. In Chrome DevTools, window.SLIHOT_DEBUG_DATE remains available for
   // ad-hoc debugging. The URL parameter takes precedence when both are set.
@@ -246,11 +265,11 @@ function configuredDate() {
   return dateFromDebugFlag(urlDate) ?? dateFromDebugFlag(window.SLIHOT_DEBUG_DATE) ?? new Date();
 }
 
-function setUpContentMenu() {
-  const dialog = document.querySelector("#content-menu");
-  const list = document.querySelector("#content-file-list");
-  const opener = document.querySelector("#content-menu-button");
-  const dateHeading = document.querySelector("#content-menu-date");
+function setUpContentMenu(): void {
+  const dialog = requireElement<HTMLDialogElement>("#content-menu");
+  const list = requireElement<HTMLUListElement>("#content-file-list");
+  const opener = requireElement<HTMLButtonElement>("#content-menu-button");
+  const dateHeading = requireElement<HTMLElement>("#content-menu-date");
 
   for (const name of contentFiles) {
     const item = document.createElement("li");
@@ -270,16 +289,16 @@ function setUpContentMenu() {
     dateHeading.textContent = hebrewDateDisplayFormatter.format(configuredDate());
     dialog.showModal();
   });
-  document.querySelector("#content-menu-close").addEventListener("click", () => dialog.close());
-  document.querySelector("#today-service-button").addEventListener("click", () => {
+  requireElement<HTMLButtonElement>("#content-menu-close").addEventListener("click", () => dialog.close());
+  requireElement<HTMLButtonElement>("#today-service-button").addEventListener("click", () => {
     dialog.close();
     renderService(configuredDate()).catch(showError);
   });
 }
 
 if (typeof document !== "undefined") {
-  document.querySelector("#content").addEventListener("click", event => {
-    if (event.target.closest(".return-to-top-button")) {
+  requireElement<HTMLElement>("#content").addEventListener("click", event => {
+    if (event.target instanceof Element && event.target.closest(".return-to-top-button")) {
       window.scrollTo({ top: 0, behavior: "smooth" });
     }
   });

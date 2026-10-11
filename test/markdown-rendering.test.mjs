@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { renderMarkdown } from "../docs/app.mjs";
+import { renderMarkdown } from "../docs/app.js";
 
 test("renderMarkdown renders Markdown headings", () => {
   assert.equal(

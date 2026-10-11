@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { dateFromDebugFlag, middleFile } from "../docs/app.mjs";
+import { dateFromDebugFlag, middleFile } from "../docs/app.js";
 
 // Noon UTC is safely within the intended Jerusalem civil day for these dates.
 const gregorianDate = date => new Date(`${date}T12:00:00Z`);
