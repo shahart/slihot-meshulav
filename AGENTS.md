@@ -2,7 +2,7 @@
 
 ## Project Structure & Module Organization
 
-This is a dependency-free static site for the combined Selichot service. Keep the published entry point in `docs/index.html`; its styles and markup live there. Browser behavior, the Hebrew-calendar selection rules, Markdown rendering, and the content picker live in `docs/app.ts`. Commit the generated `docs/app.js` alongside source changes so the static site can run without a build step at deployment time.
+This is a dependency-free static site for the combined Selichot service. Keep the published entry point in `docs/index.html`; its styles and markup live there. Browser behavior, the Hebrew-calendar selection rules, Markdown rendering, and the content picker live in `docs/app.ts`. GitHub Pages compiles the generated `docs/app.js` during deployment, so do not commit that file.
 
 Source material belongs in `docs/`. The site loads `התחלה`, one date-selected middle file, and `end`; individual files use names such as `יום ראשון עמוד 24`, `ערב ראש השנה עמוד 31`, and `ערב יום כיפור עמוד 44`. Put Node unit tests in `test/`, alongside `middle-file.test.mjs`.
 

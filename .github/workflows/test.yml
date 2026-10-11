@@ -16,5 +16,9 @@ jobs:
           node-version: 20
       - name: Install development dependencies
         run: npm ci --prefix docs
-      - name: Type-check, build, and test
-        run: npm --prefix docs test
+      - name: Type-check TypeScript
+        run: npm --prefix docs run check
+      - name: Compile browser module
+        run: npm --prefix docs run build
+      - name: Run tests
+        run: node --test test/*.test.mjs

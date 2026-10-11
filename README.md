@@ -23,8 +23,8 @@ Type-check the TypeScript source without writing `app.js`:
 
     npm --prefix docs run check
 
-`docs/app.ts` is the source module. Commit its generated `docs/app.js` so the
-published static site needs no build tooling at runtime.
+`docs/app.ts` is the source module. GitHub Pages generates `docs/app.js` during
+deployment, so it is not committed to the repository.
 
 Browser test: at Chrome's dev tools (OR http://127.0.0.1:5500/docs/index.html?SLIHOT_DEBUG_DATE=2026-09-05)
 
