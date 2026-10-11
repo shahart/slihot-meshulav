@@ -265,6 +265,13 @@ function configuredDate(): Date {
   return dateFromDebugFlag(urlDate) ?? dateFromDebugFlag(window.SLIHOT_DEBUG_DATE) ?? new Date();
 }
 
+function setUpAndroidAppLink(): void {
+  const debugDate = new URLSearchParams(window.location.search).get("SLIHOT_DEBUG_DATE");
+  const query = debugDate === null ? "" : `?SLIHOT_DEBUG_DATE=${encodeURIComponent(debugDate)}`;
+  requireElement<HTMLAnchorElement>("#android-app-link").href =
+    `intent://service/${query}#Intent;scheme=slihot;package=org.malegilboa.slihot;end`;
+}
+
 function setUpContentMenu(): void {
   const dialog = requireElement<HTMLDialogElement>("#content-menu");
   const list = requireElement<HTMLUListElement>("#content-file-list");
@@ -302,6 +309,7 @@ if (typeof document !== "undefined") {
       window.scrollTo({ top: 0, behavior: "smooth" });
     }
   });
+  // setUpAndroidAppLink();
   setUpContentMenu();
   window.slihotDebug = {
     render() {
