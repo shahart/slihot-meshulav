@@ -2,13 +2,13 @@ package org.malegilboa.slihot;
 
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.app.DatePickerDialog;
 import android.graphics.Color;
 import android.graphics.Typeface;
 import android.graphics.drawable.GradientDrawable;
 import android.icu.text.DateFormat;
 import android.icu.util.HebrewCalendar;
 import android.os.Bundle;
-import android.net.Uri;
 import android.text.SpannableStringBuilder;
 import android.text.Spanned;
 import android.text.style.RelativeSizeSpan;
@@ -50,11 +50,12 @@ public final class MainActivity extends Activity {
   private TextView hebrewDate;
   private TextView document;
   private ScrollView scrollView;
+  private Instant selectedDate;
 
   @Override public void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
     setContentView(createReader());
-    showToday();
+    showService();
   }
 
   private View createReader() {
@@ -118,7 +119,7 @@ public final class MainActivity extends Activity {
     return root;
   }
 
-  private void showToday() {
+  private void showService() {
     Instant date = configuredDate();
     hebrewDate.setText(hebrewDateDisplay(date));
     String middle = middleFile(date);
@@ -131,28 +132,36 @@ public final class MainActivity extends Activity {
   }
 
   private Instant configuredDate() {
-    Uri data = getIntent().getData();
-    String queryValue = data == null ? null : data.getQueryParameter("SLIHOT_DEBUG_DATE");
-    Instant queryDate = SelichotSchedule.debugDate(queryValue);
-    if (queryDate != null) return queryDate;
-    Instant extraDate = SelichotSchedule.debugDate(getIntent().getStringExtra("SLIHOT_DEBUG_DATE"));
-    return extraDate == null ? Instant.now() : extraDate;
+    return selectedDate == null ? Instant.now() : selectedDate;
   }
 
   private void showContentMenu() {
-    String[] choices = new String[CONTENT_FILES.size() + 1];
-    choices[0] = "חזרה לסדר של היום";
-    for (int index = 0; index < CONTENT_FILES.size(); index += 1) choices[index + 1] = CONTENT_FILES.get(index);
+    String[] choices = new String[CONTENT_FILES.size() + 2];
+    choices[0] = "בחירת תאריך לסליחות";
+    choices[1] = "חזרה לסדר של היום";
+    for (int index = 0; index < CONTENT_FILES.size(); index += 1) choices[index + 2] = CONTENT_FILES.get(index);
     new AlertDialog.Builder(this)
         .setTitle("בחירת קטע")
         .setItems(choices, (dialog, which) -> {
-          if (which == 0) showToday();
+          if (which == 0) showDatePicker();
+          else if (which == 1) {
+            selectedDate = null;
+            showService();
+          }
           else {
             currentMiddle.setText("");
-            showFiles(Arrays.asList(CONTENT_FILES.get(which - 1)));
+            showFiles(Arrays.asList(CONTENT_FILES.get(which - 2)));
           }
         })
         .show();
+  }
+
+  private void showDatePicker() {
+    LocalDate initial = (selectedDate == null ? Instant.now() : selectedDate).atZone(JERUSALEM).toLocalDate();
+    new DatePickerDialog(this, (view, year, month, day) -> {
+      selectedDate = LocalDate.of(year, month + 1, day).atTime(12, 0).atZone(JERUSALEM).toInstant();
+      showService();
+    }, initial.getYear(), initial.getMonthValue() - 1, initial.getDayOfMonth()).show();
   }
 
   private void showFiles(List<String> files) {

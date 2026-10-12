@@ -4,8 +4,6 @@ import java.time.DayOfWeek;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
-import java.time.ZoneOffset;
-import java.time.format.DateTimeParseException;
 
 /** Pure calendar rules, kept free of Android APIs so they can run as JVM tests. */
 public final class SelichotSchedule {
@@ -18,20 +16,6 @@ public final class SelichotSchedule {
   public static LocalDate effectiveServiceDate(Instant moment) {
     LocalDate date = moment.atZone(JERUSALEM).toLocalDate();
     return moment.atZone(JERUSALEM).getHour() >= 20 ? date.plusDays(1) : date;
-  }
-
-  /** Parses the Android counterpart to the site's SLIHOT_DEBUG_DATE value. */
-  public static Instant debugDate(String value) {
-    if (value == null || value.trim().isEmpty()) return null;
-    try {
-      return Instant.parse(value);
-    } catch (DateTimeParseException ignored) {
-      try {
-        return LocalDate.parse(value).atStartOfDay(ZoneOffset.UTC).toInstant();
-      } catch (DateTimeParseException invalidDate) {
-        return null;
-      }
-    }
   }
 
   public static String select(LocalDate date, int hebrewMonth, int hebrewDay, LocalDate roshHashana) {

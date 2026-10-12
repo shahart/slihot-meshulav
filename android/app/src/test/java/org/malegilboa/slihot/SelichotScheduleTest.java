@@ -37,12 +37,6 @@ public final class SelichotScheduleTest {
     assertEquals(LocalDate.parse("2026-09-12"), SelichotSchedule.effectiveServiceDate(Instant.parse("2026-09-11T17:00:00Z")));
   }
 
-  @Test public void parsesTheSameDebugDateFormatAsTheWebsite() {
-    assertEquals(Instant.parse("2026-09-05T00:00:00Z"), SelichotSchedule.debugDate("2026-09-05"));
-    assertEquals(Instant.parse("2026-09-11T17:00:00Z"), SelichotSchedule.debugDate("2026-09-11T17:00:00Z"));
-    assertEquals(null, SelichotSchedule.debugDate("not-a-date"));
-  }
-
   private static void assertFile(String date, int month, int day, LocalDate roshHashana, String expected) {
     assertEquals(expected, SelichotSchedule.select(LocalDate.parse(date), month, day, roshHashana));
   }

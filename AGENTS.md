@@ -37,7 +37,7 @@ npm --prefix docs run check
 
 ## Coding Style & Naming Conventions
 
-Use two-space indentation in HTML, CSS, JavaScript, and TypeScript. Keep the site dependency-free at runtime and use standard browser APIs. Use `camelCase` for JavaScript and TypeScript functions and variables, `SCREAMING_SNAKE_CASE` only for globals such as `window.SLIHOT_DEBUG_DATE`, and lowercase underscore-separated Markdown filenames.
+Use two-space indentation in HTML, CSS, JavaScript, and TypeScript. Keep the site dependency-free at runtime and use standard browser APIs. Use `camelCase` for JavaScript and TypeScript functions and variables, `SCREAMING_SNAKE_CASE` only for globals, and lowercase underscore-separated Markdown filenames.
 
 Preserve the `Asia/Jerusalem` calendar context. `middleFile(today)` accepts an injected Gregorian `Date`; retain that seam instead of hard-coding dates. Do not use `innerHTML` with unescaped Markdown content—pass user/content text through `escapeHtml`.
 

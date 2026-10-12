@@ -13,22 +13,8 @@ Build an installable debug APK with:
 
 The APK is written to `app/build/outputs/apk/debug/app-debug.apk`.
 
-## Debugging a service date
+## Choosing a service date
 
-The app accepts the same `SLIHOT_DEBUG_DATE` concept as the web reader. Launch
-it with either an ISO-8601 instant or a `YYYY-MM-DD` date:
-
-```sh
-/Users/shahart/Library/Android/sdk/platform-tools/adb shell am start -W \
-  -n org.malegilboa.slihot/.MainActivity \
-  --es SLIHOT_DEBUG_DATE "2026-09-05"
-```
-
-End users can open a selected service date through this link format:
-
-```text
-slihot://service?SLIHOT_DEBUG_DATE=2026-09-05
-```
-
-When both are supplied, the link's query parameter takes precedence over the
-ADB intent extra.
+Open תוכן, choose בחירת תאריך לסליחות, and select a Gregorian date. The
+selection is optional and lasts until you choose חזרה לסדר של היום or restart
+the app.

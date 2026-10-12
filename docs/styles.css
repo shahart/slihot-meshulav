@@ -39,6 +39,8 @@ dialog::backdrop { background: rgb(36 32 28 / .4); }
 .dialog-header { display: flex; justify-content: space-between; align-items: center; gap: 1rem; }
 .dialog-header h2 { margin: 0; }
 .dialog-date { margin: .2rem 0 0; color: #78674d; font-size: .9rem; }
+.date-picker-label { display: block; margin-top: 1rem; color: #78674d; }
+.service-date-input { width: 100%; margin: .35rem 0 .75rem; padding: .55rem; font: inherit; }
 .dialog-close { border: 0; background: transparent; font-size: 1.5rem; cursor: pointer; }
 .content-file-list { list-style: none; padding: 0; margin: 1rem 0 0; columns: 2; }
 .content-file-list li { break-inside: avoid; }

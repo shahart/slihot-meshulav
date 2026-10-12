@@ -22,11 +22,8 @@ const hebrewDateDisplayFormatter = new Intl.DateTimeFormat("he-IL-u-ca-hebrew", 
 });
 
 type HebrewDate = { day: number; month: string; year: number };
-type DebugDateValue = string | Date | null | undefined;
-
 declare global {
   interface Window {
-    SLIHOT_DEBUG_DATE?: string | Date;
     slihotDebug?: { render: () => Promise<void> };
   }
 }
@@ -95,13 +92,10 @@ function isValidSlichotDate(today: Date): boolean {
  *   selichot dates.
  */
 export function middleFile(today: Date = new Date()): string | null {
-  console.info("SLIHOT_DEBUG_DATE=", today.toISOString());
   const serviceDate = effectiveServiceDate(today);
   if (!isValidSlichotDate(serviceDate)) return null;
 
   const dateInHebrew = hebrewDate(serviceDate);
-  console.info("dateInHebrew=", dateInHebrew);
-
   if (dateInHebrew.month === "Elul" && dateInHebrew.day === 29) return "ערב ראש השנה עמוד 31";
   if (dateInHebrew.month === "Elul") {
     const roshHashana = roshHashanaNear(serviceDate);
@@ -230,7 +224,6 @@ async function renderService(today: Date = new Date()): Promise<void> {
     return;
   }
 
-  console.info("middleFile=", middle);
   const files = ["התחלה", middle, "המשך"];
   const markdown = await Promise.all(files.map(loadFile));
   requireElement<HTMLElement>("#content").innerHTML = renderDocument(markdown);
@@ -247,29 +240,16 @@ function showError(error: unknown): void {
   console.error(error);
 }
 
-export function dateFromDebugFlag(value: DebugDateValue): Date | null {
-  if (value === undefined || value === null || value === "") return null;
-  const date = value instanceof Date ? new Date(value) : new Date(value);
-  if (Number.isNaN(date.getTime())) {
-    console.warn("SLIHOT_DEBUG_DATE must be a valid Gregorian date.");
-    return null;
-  }
-  return date;
+export function dateFromPickerValue(value: string): Date | null {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return null;
+  const date = new Date(`${value}T12:00:00Z`);
+  return Number.isNaN(date.getTime()) || date.toISOString().slice(0, 10) !== value ? null : date;
 }
+
+let selectedDate: Date | null = null;
 
 function configuredDate(): Date {
-  // Set ?SLIHOT_DEBUG_DATE=2026-09-05 in the URL to share a specific service
-  // date. In Chrome DevTools, window.SLIHOT_DEBUG_DATE remains available for
-  // ad-hoc debugging. The URL parameter takes precedence when both are set.
-  const urlDate = new URLSearchParams(window.location.search).get("SLIHOT_DEBUG_DATE");
-  return dateFromDebugFlag(urlDate) ?? dateFromDebugFlag(window.SLIHOT_DEBUG_DATE) ?? new Date();
-}
-
-function setUpAndroidAppLink(): void {
-  const debugDate = new URLSearchParams(window.location.search).get("SLIHOT_DEBUG_DATE");
-  const query = debugDate === null ? "" : `?SLIHOT_DEBUG_DATE=${encodeURIComponent(debugDate)}`;
-  requireElement<HTMLAnchorElement>("#android-app-link").href =
-    `intent://service/${query}#Intent;scheme=slihot;package=org.malegilboa.slihot;end`;
+  return selectedDate ?? new Date();
 }
 
 function setUpContentMenu(): void {
@@ -277,6 +257,7 @@ function setUpContentMenu(): void {
   const list = requireElement<HTMLUListElement>("#content-file-list");
   const opener = requireElement<HTMLButtonElement>("#content-menu-button");
   const dateHeading = requireElement<HTMLElement>("#content-menu-date");
+  const datePicker = requireElement<HTMLInputElement>("#service-date");
 
   for (const name of contentFiles) {
     const item = document.createElement("li");
@@ -294,10 +275,20 @@ function setUpContentMenu(): void {
 
   opener.addEventListener("click", () => {
     dateHeading.textContent = hebrewDateDisplayFormatter.format(configuredDate());
+    datePicker.value = selectedDate?.toISOString().slice(0, 10) ?? "";
     dialog.showModal();
+  });
+  datePicker.addEventListener("change", () => {
+    const date = dateFromPickerValue(datePicker.value);
+    if (!date) return;
+    selectedDate = date;
+    dialog.close();
+    renderService(date).catch(showError);
   });
   requireElement<HTMLButtonElement>("#content-menu-close").addEventListener("click", () => dialog.close());
   requireElement<HTMLButtonElement>("#today-service-button").addEventListener("click", () => {
+    selectedDate = null;
+    datePicker.value = "";
     dialog.close();
     renderService(configuredDate()).catch(showError);
   });
@@ -309,7 +300,6 @@ if (typeof document !== "undefined") {
       window.scrollTo({ top: 0, behavior: "smooth" });
     }
   });
-  // setUpAndroidAppLink();
   setUpContentMenu();
   window.slihotDebug = {
     render() {

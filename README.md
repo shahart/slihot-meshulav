@@ -26,20 +26,8 @@ Type-check the TypeScript source without writing `app.js`:
 `docs/app.ts` is the source module. GitHub Pages generates `docs/app.js` during
 deployment, so it is not committed to the repository.
 
-Browser test: at Chrome's dev tools (OR http://127.0.0.1:5500/docs/index.html?SLIHOT_DEBUG_DATE=2026-09-05)
-
-```
-window.SLIHOT_DEBUG_DATE = "2026-09-05";
-window.slihotDebug.render();
-```
-
-That simulates the first 2026 Selichot day without modifying source.
-To return to the actual current date:
-
-```
-delete window.SLIHOT_DEBUG_DATE;
-window.slihotDebug.render();
-```
+Use the optional date picker in the תוכן menu to view the service for another
+Gregorian day. Choose חזרה לסדר של היום to return to the current service.
 
 נוסח נוסף של
 **ישיבת ברכת משה - מעלה אדומים**:
