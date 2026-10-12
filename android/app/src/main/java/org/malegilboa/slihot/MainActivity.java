@@ -78,6 +78,7 @@ public final class MainActivity extends Activity {
     headerRow.addView(menu, new LinearLayout.LayoutParams(
         LinearLayout.LayoutParams.WRAP_CONTENT, LinearLayout.LayoutParams.WRAP_CONTENT));
     hebrewDate = new TextView(this);
+    hebrewDate.setId(R.id.hebrew_date);
     hebrewDate.setTextColor(color("muted_brown"));
     hebrewDate.setTextDirection(View.TEXT_DIRECTION_RTL);
     LinearLayout.LayoutParams dateParams = new LinearLayout.LayoutParams(
@@ -86,6 +87,7 @@ public final class MainActivity extends Activity {
     headerRow.addView(hebrewDate, dateParams);
     header.addView(headerRow);
     currentMiddle = new TextView(this);
+    currentMiddle.setId(R.id.current_middle);
     currentMiddle.setTextColor(color("muted_brown"));
     currentMiddle.setTextDirection(View.TEXT_DIRECTION_RTL);
     header.addView(currentMiddle);
@@ -99,6 +101,7 @@ public final class MainActivity extends Activity {
     paper.setBackground(paperBackground());
 
     document = new TextView(this);
+    document.setId(R.id.service_document);
     document.setTextColor(color("ink"));
     document.setTextSize(20);
     document.setLineSpacing(dp(8), 1f);

@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+  <item name="hebrew_date" type="id" />
+  <item name="current_middle" type="id" />
+  <item name="service_document" type="id" />
+</resources>
