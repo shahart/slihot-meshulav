@@ -11,8 +11,10 @@ import android.icu.util.HebrewCalendar;
 import android.os.Bundle;
 import android.text.SpannableStringBuilder;
 import android.text.Spanned;
+import android.text.method.LinkMovementMethod;
 import android.text.style.RelativeSizeSpan;
 import android.text.style.StyleSpan;
+import android.text.style.URLSpan;
 import android.view.Gravity;
 import android.view.View;
 import android.widget.Button;
@@ -103,6 +105,8 @@ public final class MainActivity extends Activity {
     document.setTextDirection(View.TEXT_DIRECTION_RTL);
     document.setGravity(Gravity.RIGHT);
     document.setTypeface(Typeface.create(Typeface.SERIF, Typeface.NORMAL));
+    document.setMovementMethod(LinkMovementMethod.getInstance());
+    document.setLinkTextColor(color("brown"));
     paper.addView(document);
 
     Button toTop = button("חזרה לראש העמוד");
@@ -220,16 +224,46 @@ public final class MainActivity extends Activity {
   private void appendInline(SpannableStringBuilder output, String line) {
     int offset = 0;
     while (offset < line.length()) {
+      int link = linkStart(line, offset);
       int bold = line.indexOf("**", offset);
-      if (bold < 0) { output.append(line.substring(offset)); return; }
-      output.append(line, offset, bold);
-      int close = line.indexOf("**", bold + 2);
-      if (close < 0) { output.append(line.substring(bold)); return; }
-      int start = output.length();
-      output.append(line, bold + 2, close);
-      output.setSpan(new StyleSpan(Typeface.BOLD), start, output.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
-      offset = close + 2;
+      if (link < 0 && bold < 0) { output.append(line.substring(offset)); return; }
+      if (link >= 0 && (bold < 0 || link < bold)) {
+        output.append(line, offset, link);
+        int closeBracket = line.indexOf("](", link + 1);
+        int closeParen = line.indexOf(")", closeBracket + 2);
+        String label = line.substring(link + 1, closeBracket);
+        String target = line.substring(closeBracket + 2, closeParen);
+        int start = output.length();
+        output.append(label);
+        if (isLinkTarget(target)) {
+          output.setSpan(new URLSpan(target), start, output.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        }
+        offset = closeParen + 1;
+      } else {
+        output.append(line, offset, bold);
+        int close = line.indexOf("**", bold + 2);
+        if (close < 0) { output.append(line.substring(bold)); return; }
+        int start = output.length();
+        output.append(line, bold + 2, close);
+        output.setSpan(new StyleSpan(Typeface.BOLD), start, output.length(), Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        offset = close + 2;
+      }
     }
+  }
+
+  /** Index of a Markdown link `[label](target)` at or after {@code offset}, or -1. */
+  private static int linkStart(String line, int offset) {
+    int link = line.indexOf("[", offset);
+    while (link >= 0) {
+      int closeBracket = line.indexOf("](", link + 1);
+      if (closeBracket >= 0) return link;
+      link = line.indexOf("[", link + 1);
+    }
+    return -1;
+  }
+
+  private static boolean isLinkTarget(String target) {
+    return target.startsWith("http://") || target.startsWith("https://") || target.startsWith("mailto:");
   }
 
   private static int headingLevel(String text) {
