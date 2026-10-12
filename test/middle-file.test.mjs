@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { dateFromDebugFlag, middleFile } from "../docs/app.js";
+import { dateFromPickerValue, middleFile } from "../docs/app.js";
 
 // Noon UTC is safely within the intended Jerusalem civil day for these dates.
 const gregorianDate = date => new Date(`${date}T12:00:00Z`);
@@ -69,13 +69,12 @@ test("middleFile treats 20:00-23:59 Jerusalem as the next day", () => {
   }
 });
 
-test("dateFromDebugFlag accepts URL query parameter values", () => {
-  const params = new URLSearchParams("SLIHOT_DEBUG_DATE=2026-09-05");
-
+test("dateFromPickerValue accepts calendar input values", () => {
   assert.equal(
-    dateFromDebugFlag(params.get("SLIHOT_DEBUG_DATE")).toISOString(),
-    "2026-09-05T00:00:00.000Z"
+    dateFromPickerValue("2026-09-05").toISOString(),
+    "2026-09-05T12:00:00.000Z"
   );
-  assert.equal(dateFromDebugFlag(new URLSearchParams().get("SLIHOT_DEBUG_DATE")), null);
-  assert.equal(dateFromDebugFlag("not-a-date"), null);
+  assert.equal(dateFromPickerValue(""), null);
+  assert.equal(dateFromPickerValue("2026-02-29"), null);
+  assert.equal(dateFromPickerValue("not-a-date"), null);
 });
