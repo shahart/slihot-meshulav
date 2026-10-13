@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>סדר סליחות — הנוסח המשולב</title>
+    <title>סדר סליחות — הנוסח המשולב - ישיבת מעלה גלבוע</title>
     <link rel="stylesheet" href="./styles.css" />
   </head>
 
@@ -43,5 +43,12 @@
     </dialog>
 
     <script type="module" src="./app.js"></script>
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('./sw.js').catch(() => {});
+        });
+      }
+    </script>
   </body>
 </html>

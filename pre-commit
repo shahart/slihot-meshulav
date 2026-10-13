@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+
+# Define the forbidden string or regex pattern (pipe-separated for multiple)
+FORBIDDEN_PATTERN="\[1\]"
+
+# Check only the staged changes (--cached) for the pattern
+if git diff --cached | grep -E "^\+.*($FORBIDDEN_PATTERN)" > /dev/null 2>&1; then
+    echo -e "\n❌ [COMMIT REJECTED] Found forbidden strings ($FORBIDDEN_PATTERN) in your staged changes!"
+    echo -e "Please remove them or use 'git commit --no-verify' if you absolutely must bypass this.\n"
+    
+    # Show the offending lines to the developer
+    git diff --cached | grep -E "^\+.*($FORBIDDEN_PATTERN)"
+    
+    exit 1
+fi
