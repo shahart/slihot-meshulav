@@ -1,9 +1,9 @@
-const CACHE_NAME = 'selichot-v3';
+const CACHE_NAME = 'selichot-v4';
 const CORE_ASSETS = [
   "./",
   "./index.html",
   "./app.js",
-  "./style.css",
+  "./styles.css",
   "./המשך.md",
   "./התחלה.md",
   "./יום חמישי עמוד 28.md",

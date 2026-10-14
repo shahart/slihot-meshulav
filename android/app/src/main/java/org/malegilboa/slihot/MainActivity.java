@@ -8,6 +8,7 @@ import android.graphics.Typeface;
 import android.graphics.drawable.GradientDrawable;
 import android.icu.text.DateFormat;
 import android.icu.util.HebrewCalendar;
+import android.net.Uri;
 import android.os.Bundle;
 import android.text.SpannableStringBuilder;
 import android.text.Spanned;
@@ -15,6 +16,7 @@ import android.text.method.LinkMovementMethod;
 import android.text.style.RelativeSizeSpan;
 import android.text.style.StyleSpan;
 import android.text.style.URLSpan;
+import android.util.Log;
 import android.view.Gravity;
 import android.view.View;
 import android.widget.Button;
@@ -23,8 +25,12 @@ import android.widget.ScrollView;
 import android.widget.TextView;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.time.LocalDate;
@@ -37,7 +43,10 @@ import java.util.Locale;
 
 /** Offline reader for the combined Selichot service. */
 public final class MainActivity extends Activity {
+  private static final String TAG = "Slihot";
   private static final ZoneId JERUSALEM = ZoneId.of("Asia/Jerusalem");
+  /** Deployed website, used to refresh the bundled content while online. */
+  private static final String REMOTE_BASE = "https://shahart.github.io/slihot-meshulav/";
   private static final String START = "התחלה";
   private static final String END = "המשך";
   private static final List<String> CONTENT_FILES = Arrays.asList(
@@ -53,9 +62,12 @@ public final class MainActivity extends Activity {
   private TextView document;
   private ScrollView scrollView;
   private Instant selectedDate;
+  private ServiceContent content;
+  private int requestId;
 
   @Override public void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
+    content = new ServiceContent(this::readAsset, this::fetchRemote, new File(getFilesDir(), "content"));
     setContentView(createReader());
     showService();
   }
@@ -171,21 +183,86 @@ public final class MainActivity extends Activity {
     }, initial.getYear(), initial.getMonthValue() - 1, initial.getDayOfMonth()).show();
   }
 
+  /** Shows bundled or cached content immediately, then refreshes it in the background. */
   private void showFiles(List<String> files) {
+    final int request = requestId + 1;
+    requestId = request;
+    String local = composeMarkdown(files);
+    if (local == null) {
+      document.setText("לא ניתן לטעון את תוכן הסליחות");
+      return;
+    }
+    document.setText(renderMarkdown(local));
+    scrollView.post(() -> scrollView.scrollTo(0, 0));
+    refreshInBackground(files, request);
+  }
+
+  /** Downloads newer content and re-renders when it differs; a no-op while offline. */
+  private void refreshInBackground(List<String> files, int request) {
+    new Thread(() -> {
+      boolean changed = false;
+      for (String file : files) {
+        try {
+          changed |= content.refresh(file);
+        } catch (IOException offlineOrUnavailable) {
+          // No connection (or the update failed): keep showing the local copy.
+          Log.w(TAG, "Could not refresh " + file + "; keeping the local copy.", offlineOrUnavailable);
+        }
+      }
+      if (!changed) return;
+      String latest = composeMarkdown(files);
+      if (latest == null) return;
+      runOnUiThread(() -> {
+        if (request == requestId) document.setText(renderMarkdown(latest));
+      });
+    }).start();
+  }
+
+  private String composeMarkdown(List<String> files) {
     try {
       StringBuilder markdown = new StringBuilder();
-      for (String file : files) markdown.append(readAsset(file)).append("\n\n");
-      document.setText(renderMarkdown(markdown.toString()));
-      scrollView.post(() -> scrollView.scrollTo(0, 0));
+      for (String file : files) markdown.append(content.read(file)).append("\n\n");
+      return markdown.toString();
     } catch (IOException error) {
-      document.setText("לא ניתן לטעון את תוכן הסליחות");
+      return null;
+    }
+  }
+
+  private ServiceContent.Response fetchRemote(String file, String etag, String lastModified) throws IOException {
+    HttpURLConnection connection = (HttpURLConnection) new URL(REMOTE_BASE + Uri.encode(file + ".md")).openConnection();
+    try {
+      connection.setConnectTimeout(10_000);
+      connection.setReadTimeout(10_000);
+      connection.setInstanceFollowRedirects(true);
+      connection.setRequestProperty("Accept", "text/markdown,text/plain,*/*");
+      if (etag != null) connection.setRequestProperty("If-None-Match", etag);
+      if (lastModified != null) connection.setRequestProperty("If-Modified-Since", lastModified);
+      int status = connection.getResponseCode();
+      String responseEtag = connection.getHeaderField("ETag");
+      String responseLastModified = connection.getHeaderField("Last-Modified");
+      if (status == HttpURLConnection.HTTP_NOT_MODIFIED) {
+        return ServiceContent.Response.notModified(responseEtag, responseLastModified);
+      }
+      if (status != HttpURLConnection.HTTP_OK) {
+        throw new IOException("HTTP " + status + " for " + file);
+      }
+      try (InputStream stream = connection.getInputStream()) {
+        return ServiceContent.Response.modified(readStream(stream), responseEtag, responseLastModified);
+      }
+    } finally {
+      connection.disconnect();
     }
   }
 
   private String readAsset(String file) throws IOException {
+    try (InputStream stream = getAssets().open(file + ".md")) {
+      return readStream(stream);
+    }
+  }
+
+  private static String readStream(InputStream stream) throws IOException {
     StringBuilder contents = new StringBuilder();
-    try (BufferedReader reader = new BufferedReader(new InputStreamReader(
-        getAssets().open(file + ".md"), StandardCharsets.UTF_8))) {
+    try (BufferedReader reader = new BufferedReader(new InputStreamReader(stream, StandardCharsets.UTF_8))) {
       String line;
       while ((line = reader.readLine()) != null) contents.append(line).append('\n');
     }
