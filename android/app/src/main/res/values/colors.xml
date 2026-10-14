@@ -4,5 +4,6 @@
   <color name="ink">#24201C</color>
   <color name="brown">#47371F</color>
   <color name="muted_brown">#78674D</color>
+  <color name="icon_background">#998E7D</color>
 </resources>
 
